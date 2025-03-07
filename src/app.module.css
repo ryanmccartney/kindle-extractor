@@ -2,6 +2,11 @@
   width: 20rem;
 }
   
+.beforeFooter {
+  margin-bottom: var(--mantine-spacing-xl);
+  padding-bottom: var(--mantine-spacing-xl);  
+}
+
 .afterFooter {
     display: flex;
     justify-content: space-between;

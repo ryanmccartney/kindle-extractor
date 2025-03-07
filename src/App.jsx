@@ -230,7 +230,7 @@ const App = () => {
 
     return (
         <AppShell padding="md" style={{ flex: 1 }}>
-            <AppShell.Main pt={rem(25)}>
+            <AppShell.Main pt={rem(25)} className={classes.beforeFooter}>
                 <Center>
                     <Container size="md">
                         <Text
