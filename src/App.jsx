@@ -11,6 +11,7 @@ import {
     Accordion,
     Avatar,
     ScrollArea,
+    Blockquote,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import "./app.css";
@@ -30,38 +31,28 @@ const AccordionLabel = ({ title, total }) => {
 
 const App = () => {
     const [file, setFile] = useState(null);
-    const [notes, setNotes] = useState([]);
-
-    const getUniqueTitles = (notes) => {
-        return [...new Set(notes.map((item) => item.title))];
-    };
+    const [clippings, setClippings] = useState([]);
 
     const handleClick = (e) => {
         e.target.classList.toggle("strike-through");
     };
 
-    const getNotes = (groupedNotes) => {
+    const getHighlights = (highlights) => {
         const items = [];
 
-        for (let note of groupedNotes) {
-            if (note) {
+        for (let highlight of highlights) {
+            if (highlight) {
                 items.push(
                     <div
                         onClick={handleClick}
-                        key={`${note.datetime.replace(/\s/g, "")}${note.location.replace(/\s/g, "")}`}
+                        key={`${highlight.datetime.replace(/\s/g, "")}${highlight.location.replace(/\s/g, "")}`}
                     >
-                        <Group justify="space-between">
-                            <Text size="sm" fw={700}>
-                                {note.location}
-                            </Text>
-                            <Text size="sm" fs="italic">
-                                {note.datetime}
-                            </Text>
-                        </Group>
-                        <Space h="xs" />
+                        <Blockquote color="green" radius="lg" cite={highlight.datetime} mt="md">
+                            {highlight.highlight}
+                        </Blockquote>
 
-                        <Text>{note.note}</Text>
-                        <Space h="sm" />
+                        <Text>{JSON.stringify(highlight.notes, null, 2)}</Text>
+                        <Space h="md" />
                     </div>
                 );
             }
@@ -73,25 +64,15 @@ const App = () => {
     const getTitles = () => {
         const items = [];
 
-        const groupedNotes = Object.values(
-            notes.reduce((acc, item) => {
-                if (!acc[item.title]) {
-                    acc[item.title] = { title: item.title, notes: [] };
-                }
-                acc[item.title].notes.push(item);
-                return acc;
-            }, {})
-        );
-
-        for (let group of groupedNotes) {
-            if (group.title && group.notes) {
+        for (let title of clippings) {
+            if (title.title && title.highlights) {
                 items.push(
-                    <Accordion.Item key={group.title} value={group.title}>
+                    <Accordion.Item key={title.title} value={title.title}>
                         <Accordion.Control>
-                            <AccordionLabel title={group.title} total={group.notes.length} />
+                            <AccordionLabel title={title.title} total={title.highlights.length} />
                         </Accordion.Control>
                         <Accordion.Panel>
-                            <ScrollArea h={400}>{getNotes(group.notes)}</ScrollArea>
+                            <ScrollArea h={400}>{getHighlights(title.highlights)}</ScrollArea>
                         </Accordion.Panel>
                     </Accordion.Item>
                 );
@@ -103,7 +84,7 @@ const App = () => {
 
     useEffect(() => {
         const reader = new FileReader();
-        const newNotes = [];
+        const newClippings = [];
         if (file && reader) {
             reader.readAsText(file);
 
@@ -114,16 +95,30 @@ const App = () => {
                 let i = 0;
                 while (i < lines.length) {
                     const locationParts = lines[i + 1] ? lines[i + 1].split("|") : ["", ""];
+                    const isHighlight = lines[i + 1] && lines[i + 1].includes("Highlight ") ? true : false;
 
-                    newNotes.push({
-                        title: lines[i] ? lines[i].trim() : "",
-                        location: locationParts[0].replace(/^[\s-]+|[\s-]+$/g, ""),
-                        datetime: locationParts[locationParts.length - 1].replace(" Added on ", "").trim(),
-                        note: lines[i + 3] ? lines[i + 3].trim() : "",
-                    });
+                    if (lines[i + 3] && isHighlight) {
+                        newClippings.push({
+                            title: lines[i] ? lines[i].trim() : "",
+                            location: locationParts[0].replace(/^[\s-]+|[\s-]+$/g, ""),
+                            datetime: locationParts[locationParts.length - 1].replace(" Added on ", "").trim(),
+                            highlight: isHighlight ? lines[i + 3].trim() : undefined,
+                        });
+                    }
                     i += 5;
                 }
-                setNotes(newNotes);
+
+                const groupedClippings = Object.values(
+                    newClippings.reduce((acc, item) => {
+                        if (!acc[item.title]) {
+                            acc[item.title] = { title: item.title, highlights: [] };
+                        }
+                        acc[item.title].highlights.push(item);
+                        return acc;
+                    }, {})
+                );
+
+                setClippings(groupedClippings);
             };
         }
     }, [file]);
@@ -153,8 +148,7 @@ const App = () => {
                         </Text>
                         <Space h="md" />
                         <Group justify="flex-end" gap="sm">
-                            <Badge color="green">{notes.length} notes </Badge>
-                            <Badge color="green">{getUniqueTitles(notes).length} titles</Badge>
+                            <Badge color="green">{clippings.length} titles</Badge>
                         </Group>
                         <Space h="md" />
 
