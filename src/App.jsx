@@ -14,6 +14,7 @@ import {
     Blockquote,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
+import md5 from "md5";
 import "./app.css";
 
 const AccordionLabel = ({ title, total }) => {
@@ -37,21 +38,44 @@ const App = () => {
         e.target.classList.toggle("strike-through");
     };
 
+    const parseRange = (range) => {
+        const [min, max] = range.split("-").map(Number);
+        return { min, max, range };
+    };
+
+    const getNotes = (notes = []) => {
+        const items = [];
+
+        for (let note of notes) {
+            items.push(
+                <>
+                    <Space h="sm" />
+                    <Text>{JSON.stringify(note.note, null, 2)}</Text>
+                </>
+            );
+        }
+
+        return items;
+    };
+
     const getHighlights = (highlights) => {
         const items = [];
 
         for (let highlight of highlights) {
-            if (highlight) {
+            if (highlight && (highlight.location || highlight.page)) {
                 items.push(
-                    <div
-                        onClick={handleClick}
-                        key={`${highlight.datetime.replace(/\s/g, "")}${highlight.location.replace(/\s/g, "")}`}
-                    >
-                        <Blockquote color="green" radius="lg" cite={highlight.datetime} mt="md">
+                    <div onClick={handleClick} key={md5(highlight.datetime)}>
+                        <Blockquote
+                            color="green"
+                            radius="lg"
+                            cite={`${highlight.datetime}${highlight.page ? `, page ${highlight.page}` : ""}`}
+                            mt="md"
+                        >
                             {highlight.highlight}
                         </Blockquote>
 
-                        <Text>{JSON.stringify(highlight.notes, null, 2)}</Text>
+                        {getNotes(highlight.notes)}
+
                         <Space h="md" />
                     </div>
                 );
@@ -94,16 +118,67 @@ const App = () => {
 
                 let i = 0;
                 while (i < lines.length) {
-                    const locationParts = lines[i + 1] ? lines[i + 1].split("|") : ["", ""];
+                    const dashParts = lines[i + 1] ? lines[i + 1].split("|") : ["", ""];
+                    const datetime = dashParts[dashParts.length - 1].replace(" Added on ", "").trim();
+                    let page = undefined;
+                    let location = undefined;
+                    let locationPageString;
+
+                    if (dashParts && dashParts.length > 2) {
+                        locationPageString = dashParts[0] + dashParts[1];
+                    } else {
+                        locationPageString = dashParts[0];
+                    }
+
+                    const locationParts = locationPageString
+                        .replace(/^[\s-]+|[\s-]+$/g, "")
+                        .replace(/ +(?= )/g, "")
+                        .split(" ");
+
+                    let j = 0;
+                    while (j < locationParts.length) {
+                        if (locationParts[j] == "location") {
+                            location = locationParts[j + 1];
+                        }
+                        if (locationParts[j] == "page") {
+                            page = locationParts[j + 1];
+                        }
+                        j += 1;
+                    }
+
+                    if (!location) {
+                        location = page;
+                    }
+
                     const isHighlight = lines[i + 1] && lines[i + 1].includes("Highlight ") ? true : false;
 
-                    if (lines[i + 3] && isHighlight) {
-                        newClippings.push({
+                    //Create a new clipping
+                    if (lines[i + 3]) {
+                        const clipping = {
                             title: lines[i] ? lines[i].trim() : "",
-                            location: locationParts[0].replace(/^[\s-]+|[\s-]+$/g, ""),
-                            datetime: locationParts[locationParts.length - 1].replace(" Added on ", "").trim(),
-                            highlight: isHighlight ? lines[i + 3].trim() : undefined,
-                        });
+                            datetime,
+                        };
+
+                        if (location) {
+                            if (isHighlight) {
+                                clipping.location = parseRange(location);
+                            } else {
+                                clipping.location = parseInt(location);
+                            }
+                        }
+
+                        if (page) {
+                            clipping.page = page;
+                        }
+
+                        if (isHighlight) {
+                            clipping.notes = [];
+                            clipping.highlight = lines[i + 3].trim();
+                        } else {
+                            clipping.note = lines[i + 3].trim();
+                        }
+
+                        newClippings.push(clipping);
                     }
                     i += 5;
                 }
@@ -111,12 +186,38 @@ const App = () => {
                 const groupedClippings = Object.values(
                     newClippings.reduce((acc, item) => {
                         if (!acc[item.title]) {
-                            acc[item.title] = { title: item.title, highlights: [] };
+                            acc[item.title] = { title: item.title, highlights: [], notes: [] };
                         }
-                        acc[item.title].highlights.push(item);
+
+                        if (item.highlight) {
+                            acc[item.title].highlights.push(item);
+                        }
+
+                        if (item.note) {
+                            acc[item.title].notes.push(item);
+                        }
+
                         return acc;
                     }, {})
                 );
+
+                for (let i in groupedClippings) {
+                    for (let j in groupedClippings[i].highlights) {
+                        let k = 0;
+                        while (k < groupedClippings[i].notes.length) {
+                            if (
+                                groupedClippings[i].highlights[j].location.max >=
+                                    groupedClippings[i].notes[k].location &&
+                                groupedClippings[i].highlights[j].location.min <= groupedClippings[i].notes[k].location
+                            ) {
+                                const note = groupedClippings[i].notes.splice(k, 1);
+                                groupedClippings[i].highlights[j].notes.push(note[0]);
+                            } else {
+                                k += 1;
+                            }
+                        }
+                    }
+                }
 
                 setClippings(groupedClippings);
             };
