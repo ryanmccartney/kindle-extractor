@@ -12,10 +12,12 @@ import {
     Avatar,
     ScrollArea,
     Blockquote,
+    Loader,
+    Code,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import md5 from "md5";
-import "./app.css";
+import classes from "./app.module.css";
 
 const AccordionLabel = ({ title, total }) => {
     return (
@@ -32,11 +34,9 @@ const AccordionLabel = ({ title, total }) => {
 
 const App = () => {
     const [file, setFile] = useState(null);
-    const [clippings, setClippings] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    const handleClick = (e) => {
-        e.target.classList.toggle("strike-through");
-    };
+    const [clippings, setClippings] = useState([]);
 
     const parseRange = (range) => {
         const [min, max] = range.split("-").map(Number);
@@ -64,11 +64,11 @@ const App = () => {
         for (let highlight of highlights) {
             if (highlight && (highlight.location || highlight.page)) {
                 items.push(
-                    <div onClick={handleClick} key={md5(highlight.datetime)}>
+                    <div key={md5(highlight.datetime)}>
                         <Blockquote
                             color="green"
                             radius="lg"
-                            cite={`${highlight.datetime}${highlight.page ? `, page ${highlight.page}` : ""}`}
+                            cite={`${highlight.page ? `page ${highlight.page}, ` : ""} ${highlight.datetime}`}
                             mt="md"
                         >
                             {highlight.highlight}
@@ -110,6 +110,7 @@ const App = () => {
         const reader = new FileReader();
         const newClippings = [];
         if (file && reader) {
+            setLoading(true);
             reader.readAsText(file);
 
             reader.onload = () => {
@@ -179,6 +180,7 @@ const App = () => {
                         }
 
                         newClippings.push(clipping);
+                        setLoading(false);
                     }
                     i += 5;
                 }
@@ -221,6 +223,8 @@ const App = () => {
 
                 setClippings(groupedClippings);
             };
+        } else {
+            setClippings([]);
         }
     }, [file]);
 
@@ -229,23 +233,38 @@ const App = () => {
             <AppShell.Main pt={rem(25)}>
                 <Center>
                     <Container size="md">
-                        <Text size="xl" fw={700} variant="gradient" gradient={{ from: "green", to: "grape", deg: 145 }}>
+                        <Text
+                            ta="center"
+                            size="xl"
+                            fw={1000}
+                            variant="gradient"
+                            gradient={{ from: "green", to: "grape", deg: 120 }}
+                        >
                             Kindle Extractor
                         </Text>
-                        <Text size="md" fw={300}>
-                            Extract Notes from your kindle
+
+                        <Text ta="center" size="md" fw={300}>
+                            Extract highlights and notes made on your kindle
                         </Text>
                         <Space h="lg" />
-                        <FileInput
-                            value={file}
-                            onChange={setFile}
-                            label="Upload 'My Clippings' File"
-                            placeholder="My Clippings.txt"
-                        />
+
+                        <Center>
+                            <FileInput
+                                clearable
+                                value={file}
+                                className={classes.fileInput}
+                                onChange={setFile}
+                                variant="filled"
+                                accept="text/plain"
+                                placeholder="Upload File"
+                            />
+                        </Center>
+
                         <Space h="md" />
-                        <Text size="xs">
-                            Plug your kindle in via USB, unlock it if it has a pin. Open the removable drive that
-                            appears. Navigate to documents, find the 'My Clippings.txt' file and upload it here
+                        <Text ta="center" size="xs">
+                            Plug your kindle in via USB. If it's got a pin, unlock it. You should see that a new
+                            removable drive has appeared on your device. Navigate to <Code>Documents</Code> folder and
+                            find the <Code>My Clippings.txt</Code> file. Upload this here
                         </Text>
                         <Space h="md" />
                         <Group justify="flex-end" gap="sm">
@@ -253,10 +272,24 @@ const App = () => {
                         </Group>
                         <Space h="md" />
 
-                        <Accordion>{getTitles()}</Accordion>
+                        {loading ? (
+                            <Center>
+                                <Loader color="green" size="xl" />
+                            </Center>
+                        ) : (
+                            <Accordion>{getTitles()}</Accordion>
+                        )}
                     </Container>
                 </Center>
             </AppShell.Main>
+
+            <AppShell.Footer>
+                <Container className={classes.afterFooter}>
+                    <Text c="dimmed" size="sm">
+                        © 2025 Ryan McCartney. All rights reserved.
+                    </Text>
+                </Container>
+            </AppShell.Footer>
         </AppShell>
     );
 };

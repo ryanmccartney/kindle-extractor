@@ -1,0 +1,15 @@
+.fileInput {
+  width: 20rem;
+}
+  
+.afterFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--mantine-spacing-md);
+    padding-top: var(--mantine-spacing-md);
+    padding-bottom: var(--mantine-spacing-xl);  
+    @media (max-width: $mantine-breakpoint-sm) {
+      flex-direction: column;    
+    }
+}
