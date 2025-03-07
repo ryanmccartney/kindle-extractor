@@ -263,8 +263,8 @@ const App = () => {
                         <Space h="md" />
                         <Text ta="center" size="xs">
                             Plug your kindle in via USB. If it's got a pin, unlock it. You should see that a new
-                            removable drive has appeared on your device. Navigate to <Code>Documents</Code> folder and
-                            find the <Code>My Clippings.txt</Code> file. Upload this here
+                            removable drive has appeared on your device. Navigate to the <Code>Documents</Code> folder
+                            and find the <Code>My Clippings.txt</Code> file. Upload this here
                         </Text>
                         <Space h="md" />
                         <Group justify="flex-end" gap="sm">
