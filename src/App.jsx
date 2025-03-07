@@ -18,7 +18,7 @@ import "./app.css";
 const AccordionLabel = ({ title, total }) => {
     return (
         <Group wrap="nowrap">
-            <Avatar radius="lg" color="blue" size="sm">
+            <Avatar radius="lg" color="green" size="sm">
                 {total}
             </Avatar>
             <div>
@@ -133,7 +133,7 @@ const App = () => {
             <AppShell.Main pt={rem(25)}>
                 <Center>
                     <Container size="md">
-                        <Text size="xl" fw={700} variant="gradient" gradient={{ from: "blue", to: "grape", deg: 145 }}>
+                        <Text size="xl" fw={700} variant="gradient" gradient={{ from: "green", to: "grape", deg: 145 }}>
                             Kindle Extractor
                         </Text>
                         <Text size="md" fw={300}>
@@ -153,8 +153,8 @@ const App = () => {
                         </Text>
                         <Space h="md" />
                         <Group justify="flex-end" gap="sm">
-                            <Badge>{notes.length} notes </Badge>
-                            <Badge>{getUniqueTitles(notes).length} titles</Badge>
+                            <Badge color="green">{notes.length} notes </Badge>
+                            <Badge color="green">{getUniqueTitles(notes).length} titles</Badge>
                         </Group>
                         <Space h="md" />
 
