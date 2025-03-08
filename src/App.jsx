@@ -13,11 +13,26 @@ import {
     ScrollArea,
     Blockquote,
     Loader,
+    ActionIcon,
+    Flex,
     Code,
+    Tooltip,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import md5 from "md5";
+import {
+    Document,
+    Packer,
+    Paragraph,
+    TextRun,
+    Header,
+    CommentRangeStart,
+    CommentRangeEnd,
+    CommentReference,
+} from "docx";
+import { saveAs } from "file-saver";
 import classes from "./app.module.css";
+import { IconDownload } from "@tabler/icons-react";
 
 const AccordionLabel = ({ title, total }) => {
     return (
@@ -85,17 +100,96 @@ const App = () => {
         return items;
     };
 
+    const notesDownload = (index) => {
+        const title = clippings[index];
+
+        const comments = {
+            children: [],
+        };
+
+        const addComments = (index, notes) => {
+            for (let note of notes) {
+                if (note.note) {
+                    comments.children.push({
+                        id: index,
+                        author: "Kindle Extractor",
+                        date: new Date(Date.parse(note.datetime)),
+                        children: [
+                            new Paragraph({
+                                text: note.note,
+                            }),
+                        ],
+                    });
+                }
+            }
+        };
+
+        const sections = [
+            {
+                properties: {},
+                headers: {
+                    default: new Header({
+                        children: [new Paragraph(title.title)],
+                    }),
+                },
+                children: title.highlights.map((item, index) => {
+                    addComments(index, item.notes);
+                    return new Paragraph({
+                        children: [
+                            new CommentRangeStart(index),
+                            new TextRun({
+                                text: item.highlight,
+                                bold: true,
+                            }),
+                            new CommentRangeEnd(index),
+                            new TextRun({
+                                children: [new CommentReference(index)],
+                                bold: true,
+                            }),
+                        ],
+                        spacing: { after: 500 },
+                    });
+                }),
+            },
+        ];
+
+        const doc = new Document({ comments, sections });
+
+        Packer.toBlob(doc).then((blob) => {
+            saveAs(blob, `${title.title}.docx`);
+        });
+    };
+
     const getTitles = () => {
         const items = [];
 
-        for (let title of clippings) {
+        for (let [index, title] of clippings.entries()) {
             if (title.title && title.highlights) {
                 items.push(
                     <Accordion.Item key={title.title} value={title.title}>
                         <Accordion.Control>
-                            <AccordionLabel title={title.title} total={title.highlights.length} />
+                            <AccordionLabel
+                                title={title.title}
+                                total={title.highlights.length}
+                                index={index}
+                                notesDownload={notesDownload}
+                            />
                         </Accordion.Control>
                         <Accordion.Panel>
+                            <Flex mih={50} gap="md" justify="flex-end" align="flex-start" direction="row" wrap="wrap">
+                                <Tooltip label="Download Document">
+                                    <ActionIcon
+                                        onClick={() => {
+                                            notesDownload(index);
+                                        }}
+                                        color="green"
+                                        variant="subtle"
+                                        aria-label="Download"
+                                    >
+                                        <IconDownload style={{ width: "70%", height: "70%" }} stroke={1.5} />
+                                    </ActionIcon>
+                                </Tooltip>
+                            </Flex>
                             <ScrollArea h={400}>{getHighlights(title.highlights)}</ScrollArea>
                         </Accordion.Panel>
                     </Accordion.Item>
