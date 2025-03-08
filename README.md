@@ -12,7 +12,7 @@ Try it out at [ryan.mccartney.info/kindle-extractor](https://ryan.mccartney.info
 
 ## Todo
 
-* Download notes for each book
+* Download notes for each book - Added in `v1.1.0`
 * Upload a `.docx` and attempt to match highlights and notes to it, allow downloading again afterwards
 
 ## Development
