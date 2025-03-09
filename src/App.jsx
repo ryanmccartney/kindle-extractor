@@ -134,21 +134,26 @@ const App = () => {
                 },
                 children: title.highlights.map((item, index) => {
                     addComments(index, item.notes);
-                    return new Paragraph({
+                    const paragraph = {
                         children: [
                             new CommentRangeStart(index),
                             new TextRun({
                                 text: item.highlight,
-                                bold: true,
                             }),
                             new CommentRangeEnd(index),
+                        ],
+                        spacing: { after: 500 },
+                    };
+
+                    if (item.notes.length > 0) {
+                        paragraph.children.push(
                             new TextRun({
                                 children: [new CommentReference(index)],
                                 bold: true,
-                            }),
-                        ],
-                        spacing: { after: 500 },
-                    });
+                            })
+                        );
+                    }
+                    return new Paragraph(paragraph);
                 }),
             },
         ];
