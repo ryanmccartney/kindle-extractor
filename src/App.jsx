@@ -9,7 +9,7 @@ import {
     Badge,
     Group,
     Accordion,
-    Avatar,
+   Avatar,
     ScrollArea,
     Blockquote,
     Loader,
@@ -214,11 +214,12 @@ const App = () => {
 
             reader.onload = () => {
                 const fileContents = reader.result;
-                const lines = fileContents.split("\r\n");
+                const entries = fileContents.split("==========")
 
-                let i = 0;
-                while (i < lines.length) {
-                    const dashParts = lines[i + 1] ? lines[i + 1].split("|") : ["", ""];
+                for(let entry of entries){
+                    const lines = entry.split("\r\n");
+
+                    const dashParts = lines[2] ? lines[2].split("|") : ["", ""];
                     const datetime = dashParts[dashParts.length - 1].replace(" Added on ", "").trim();
                     let page = undefined;
                     let location = undefined;
@@ -237,10 +238,10 @@ const App = () => {
 
                     let j = 0;
                     while (j < locationParts.length) {
-                        if (locationParts[j] == "location") {
+                        if (locationParts[j] === "location" || locationParts[j] === "Location") {
                             location = locationParts[j + 1];
                         }
-                        if (locationParts[j] == "page") {
+                        if (locationParts[j] === "page" || locationParts[j] === "Page") {
                             page = locationParts[j + 1];
                         }
                         j += 1;
@@ -250,12 +251,12 @@ const App = () => {
                         location = page;
                     }
 
-                    const isHighlight = lines[i + 1] && lines[i + 1].includes("Highlight ") ? true : false;
+                    const isHighlight = lines[2] && (lines[2].includes("Highlight ") || lines[2].includes("highlight "))? true : false;
 
                     //Create a new clipping
-                    if (lines[i + 3]) {
+                    if (lines[4]) {
                         const clipping = {
-                            title: lines[i] ? lines[i].trim() : "",
+                            title: lines[1] ? lines[1].trim() : "",
                             datetime,
                         };
 
@@ -273,15 +274,14 @@ const App = () => {
 
                         if (isHighlight) {
                             clipping.notes = [];
-                            clipping.highlight = lines[i + 3].trim();
+                            clipping.highlight = lines.slice(4).join(" ").trim();
                         } else {
-                            clipping.note = lines[i + 3].trim();
+                            clipping.note = lines.slice(4).join(" ").trim();
                         }
 
                         newClippings.push(clipping);
                         setLoading(false);
                     }
-                    i += 5;
                 }
 
                 const groupedClippings = Object.values(
