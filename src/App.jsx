@@ -33,6 +33,7 @@ import {
 import { saveAs } from "file-saver";
 import classes from "./app.module.css";
 import { IconDownload } from "@tabler/icons-react";
+import formatDate from "./utils/formatDate";
 
 const AccordionLabel = ({ title, total }) => {
     return (
@@ -385,7 +386,7 @@ const App = () => {
             <AppShell.Footer>
                 <Container className={classes.afterFooter}>
                     <Text c="dimmed" size="sm">
-                        © 2025 Ryan McCartney. All rights reserved.
+                        © 2025 Ryan McCartney. All rights reserved. Version: v{__VERSION__} Build Time:{" "}{formatDate(__BUILD_TIME__)} Hash:{" "}{__HASH__}
                     </Text>
                 </Container>
             </AppShell.Footer>

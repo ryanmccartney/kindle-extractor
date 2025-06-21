@@ -1,7 +1,7 @@
 {
   "name": "kindle-extractor",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "module",
   "author": "Ryan McCartney <ryan@mccartney.info>",
   "license": "AGPL-3.0-only",
@@ -10,7 +10,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
+    "deploy": "export GIT_COMMIT=$(git rev-parse HEAD) && gh-pages -d dist"
   },
   "dependencies": {
     "@mantine/core": "^7.17.1",
